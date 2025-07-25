@@ -43,6 +43,7 @@ export const NotificationChannelList = ({
       case "slack": return "Slack";
       case "signal": return "Signal";
       case "email": return "Email";
+      case "wecom": return "企业微信";
       default: return type;
     }
   };
