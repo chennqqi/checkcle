@@ -26,6 +26,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Loader2, MessageSquare } from "lucide-react";
 import TestWecomDialog from "./TestWecomDialog";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface NotificationChannelDialogProps {
   open: boolean;
@@ -104,6 +105,7 @@ export const NotificationChannelDialog = ({
   const notificationType = watch("notification_type");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [showTestWecomDialog, setShowTestWecomDialog] = useState(false);
+  const { language } = useLanguage();
   
   useEffect(() => {
     if (editingConfig) {
@@ -237,7 +239,7 @@ export const NotificationChannelDialog = ({
                           <RadioGroupItem value="wecom" />
                         </FormControl>
                         <FormLabel className="font-normal">
-                          企业微信
+                          {language === "zh-CN" ? "企业微信" : "Wecom"}
                         </FormLabel>
                       </FormItem>
                     </RadioGroup>
@@ -336,10 +338,10 @@ export const NotificationChannelDialog = ({
                     <FormItem>
                       <FormLabel>Webhook URL</FormLabel>
                       <FormControl>
-                        <Input placeholder="企业微信机器人Webhook URL" {...field} />
+                        <Input placeholder={language === "zh-CN" ? "企业微信机器人Webhook URL" : "Wecom Bot Webhook URL"} {...field} />
                       </FormControl>
                       <FormDescription>
-                        在企业微信群聊中添加机器人，获取Webhook URL
+                        {language === "zh-CN" ? "在企业微信群聊中添加机器人，获取Webhook URL" : "Add a bot in Wecom group chat to get the Webhook URL"}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -353,7 +355,7 @@ export const NotificationChannelDialog = ({
                     onClick={() => setShowTestWecomDialog(true)}
                   >
                     <MessageSquare className="h-4 w-4" />
-                    发送测试消息
+                    {language === "zh-CN" ? "发送测试消息" : "Send Test Message"}
                   </Button>
                 )}
               </>

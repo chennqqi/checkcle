@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertConfiguration } from "@/services/alertConfigService";
 import { testSendWecomMessage } from "@/services/notification/wecomService";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface TestWecomDialogProps {
   open: boolean;
@@ -20,15 +21,16 @@ const TestWecomDialog: React.FC<TestWecomDialogProps> = ({
   onOpenChange,
   config
 }) => {
-  const [serviceName, setServiceName] = useState('测试服务');
+  const { language } = useLanguage();
+  const [serviceName, setServiceName] = useState(language === "zh-CN" ? '测试服务' : 'Test Service');
   const [isTesting, setIsTesting] = useState(false);
   const [lastResult, setLastResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const handleSend = async () => {
     if (!config) {
       toast({
-        title: "配置错误",
-        description: "无法获取企业微信配置信息",
+        title: language === "zh-CN" ? "配置错误" : "Configuration Error",
+        description: language === "zh-CN" ? "无法获取企业微信配置信息" : "Unable to get Wecom configuration",
         variant: "destructive",
       });
       return;
@@ -36,8 +38,8 @@ const TestWecomDialog: React.FC<TestWecomDialogProps> = ({
     
     if (!config.wecom_webhook_url) {
       toast({
-        title: "配置错误",
-        description: "请先设置企业微信 Webhook URL",
+        title: language === "zh-CN" ? "配置错误" : "Configuration Error",
+        description: language === "zh-CN" ? "请先设置企业微信 Webhook URL" : "Please set Wecom Webhook URL first",
         variant: "destructive",
       });
       return;
@@ -47,9 +49,9 @@ const TestWecomDialog: React.FC<TestWecomDialogProps> = ({
       setLastResult(null);
       setIsTesting(true);
       
-      console.log('发送企业微信测试消息:', {
+      console.log(language === "zh-CN" ? '发送企业微信测试消息:' : 'Sending Wecom test message:', {
         serviceName,
-        webhookUrl: config.wecom_webhook_url ? "[已隐藏]" : undefined
+        webhookUrl: config.wecom_webhook_url ? (language === "zh-CN" ? "[已隐藏]" : "[hidden]") : undefined
       });
       
       const result = await testSendWecomMessage(config, serviceName);
@@ -57,29 +59,29 @@ const TestWecomDialog: React.FC<TestWecomDialogProps> = ({
       if (result) {
         setLastResult({
           success: true,
-          message: `测试消息已成功发送到企业微信`
+          message: language === "zh-CN" ? `测试消息已成功发送到企业微信` : `Test message has been successfully sent to Wecom`
         });
         
         toast({
-          title: "发送成功",
-          description: `测试消息已成功发送到企业微信`,
+          title: language === "zh-CN" ? "发送成功" : "Send Success",
+          description: language === "zh-CN" ? `测试消息已成功发送到企业微信` : `Test message has been successfully sent to Wecom`,
           variant: "default",
         });
       } else {
         setLastResult({
           success: false,
-          message: "发送测试消息失败，请检查配置和网络连接"
+          message: language === "zh-CN" ? "发送测试消息失败，请检查配置和网络连接" : "Failed to send test message, please check configuration and network connection"
         });
         
         toast({
-          title: "发送失败",
-          description: "发送测试消息失败，请检查配置和网络连接",
+          title: language === "zh-CN" ? "发送失败" : "Send Failed",
+          description: language === "zh-CN" ? "发送测试消息失败，请检查配置和网络连接" : "Failed to send test message, please check configuration and network connection",
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error('发送企业微信测试消息出错:', error);
-      const errorMessage = error instanceof Error ? error.message : "发送测试消息失败";
+      console.error(language === "zh-CN" ? '发送企业微信测试消息出错:' : 'Error sending Wecom test message:', error);
+      const errorMessage = error instanceof Error ? error.message : (language === "zh-CN" ? "发送测试消息失败" : "Failed to send test message");
       
       setLastResult({
         success: false,
@@ -87,7 +89,7 @@ const TestWecomDialog: React.FC<TestWecomDialogProps> = ({
       });
       
       toast({
-        title: "错误",
+        title: language === "zh-CN" ? "错误" : "Error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -99,7 +101,7 @@ const TestWecomDialog: React.FC<TestWecomDialogProps> = ({
   const handleClose = () => {
     onOpenChange(false);
     // 重置表单但保留上次结果以供参考
-    setServiceName('测试服务');
+    setServiceName(language === "zh-CN" ? '测试服务' : 'Test Service');
     // 不立即重置lastResult，以便用户查看结果
     setTimeout(() => setLastResult(null), 300);
   };
@@ -110,7 +112,7 @@ const TestWecomDialog: React.FC<TestWecomDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
-            发送企业微信测试消息
+            {language === "zh-CN" ? "发送企业微信测试消息" : "Send Wecom Test Message"}
           </DialogTitle>
           <Button
             variant="ghost"
@@ -140,12 +142,12 @@ const TestWecomDialog: React.FC<TestWecomDialogProps> = ({
 
           {/* 服务名称 */}
           <div className="space-y-2">
-            <Label>服务名称</Label>
+            <Label>{language === "zh-CN" ? "服务名称" : "Service Name"}</Label>
             <Input
               type="text"
               value={serviceName}
               onChange={(e) => setServiceName(e.target.value)}
-              placeholder="输入服务名称"
+              placeholder={language === "zh-CN" ? "输入服务名称" : "Enter service name"}
               disabled={isTesting}
             />
           </div>
@@ -154,14 +156,16 @@ const TestWecomDialog: React.FC<TestWecomDialogProps> = ({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              这将使用您配置的企业微信 Webhook URL 发送测试消息。请确保已正确配置企业微信机器人。
+              {language === "zh-CN" 
+                ? "这将使用您配置的企业微信 Webhook URL 发送测试消息。请确保已正确配置企业微信机器人。" 
+                : "This will send a test message using the Wecom Webhook URL you configured. Please ensure the Wecom bot is correctly configured."}
             </AlertDescription>
           </Alert>
         </div>
 
         <DialogFooter className="flex justify-between">
           <Button variant="outline" onClick={handleClose} disabled={isTesting}>
-            关闭
+            {language === "zh-CN" ? "关闭" : "Close"}
           </Button>
           <Button 
             onClick={handleSend} 
@@ -173,7 +177,9 @@ const TestWecomDialog: React.FC<TestWecomDialogProps> = ({
             ) : (
               <MessageSquare className="h-4 w-4" />
             )}
-            {isTesting ? "发送中..." : "发送测试消息"}
+            {isTesting 
+              ? (language === "zh-CN" ? "发送中..." : "Sending...") 
+              : (language === "zh-CN" ? "发送测试消息" : "Send Test Message")}
           </Button>
         </DialogFooter>
       </DialogContent>

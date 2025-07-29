@@ -1,6 +1,17 @@
 import { toast } from "@/hooks/use-toast";
 import { AlertConfiguration } from "../alertConfigService";
 import api from "@/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+// 获取当前语言环境
+let currentLanguage = "en";
+try {
+  // 尝试从localStorage获取语言设置
+  const storedLanguage = typeof window !== 'undefined' ? localStorage.getItem('language') : null;
+  currentLanguage = storedLanguage || "en";
+} catch (e) {
+  console.error("Error getting language from localStorage:", e);
+}
 
 /**
  * Send a notification via WeCom
@@ -24,9 +35,10 @@ export async function sendWecomNotification(
     
     if (!webhookUrl) {
       console.error("Missing WeChat Work configuration - Webhook URL:", webhookUrl);
+      const isZhCN = currentLanguage === "zh-CN";
       toast({
-        title: "Configuration Error",
-        description: "Missing WeChat Work webhook URL",
+        title: isZhCN ? "配置错误" : "Configuration Error",
+        description: isZhCN ? "缺少企业微信 Webhook URL" : "Missing Wecom webhook URL",
         variant: "destructive"
       });
       return false;
@@ -61,9 +73,12 @@ export async function sendWecomNotification(
       // Check if response is ok
       if (response.status !== 200) {
         console.error("Error response from notification API:", response.status);
+        const isZhCN = currentLanguage === "zh-CN";
         toast({
-          title: "Notification Failed",
-          description: `Server returned error ${response.status}: ${response.json?.description || "Unknown error"}`,
+          title: isZhCN ? "通知失败" : "Notification Failed",
+          description: isZhCN 
+            ? `服务器返回错误 ${response.status}: ${response.json?.description || "未知错误"}` 
+            : `Server returned error ${response.status}: ${response.json?.description || "Unknown error"}`,
           variant: "destructive"
         });
         return false;
@@ -73,34 +88,42 @@ export async function sendWecomNotification(
       
       if (responseData && responseData.ok === false) {
         console.error("Error sending notification:", responseData);
+        const isZhCN = currentLanguage === "zh-CN";
         toast({
-          title: "Notification Failed",
-          description: responseData.description || "Failed to send notification",
+          title: isZhCN ? "通知失败" : "Notification Failed",
+          description: responseData.description || (isZhCN ? "发送通知失败" : "Failed to send notification"),
           variant: "destructive"
         });
         return false;
       }
 
       console.log("Notification sent successfully");
+      const isZhCN = currentLanguage === "zh-CN";
       toast({
-        title: "Notification Sent",
-        description: "WeChat Work notification sent successfully"
+        title: isZhCN ? "通知已发送" : "Notification Sent",
+        description: isZhCN ? "企业微信通知已成功发送" : "Wecom notification sent successfully"
       });
       return true;
     } catch (error) {
       console.error("Error calling notification API:", error);
+      const isZhCN = currentLanguage === "zh-CN";
       toast({
-        title: "API Error",
-        description: `Failed to communicate with notification service: ${error instanceof Error ? error.message : "Network error"}`,
+        title: isZhCN ? "API 错误" : "API Error",
+        description: isZhCN 
+          ? `与通知服务通信失败: ${error instanceof Error ? error.message : "网络错误"}` 
+          : `Failed to communicate with notification service: ${error instanceof Error ? error.message : "Network error"}`,
         variant: "destructive"
       });
       return false;
     }
   } catch (error) {
     console.error("Error in sendWecomNotification:", error);
+    const isZhCN = currentLanguage === "zh-CN";
     toast({
-      title: "Notification Error",
-      description: `Error sending WeChat Work notification: ${error instanceof Error ? error.message : "Unknown error"}`,
+      title: isZhCN ? "通知错误" : "Notification Error",
+      description: isZhCN 
+        ? `发送企业微信通知时出错: ${error instanceof Error ? error.message : "未知错误"}` 
+        : `Error sending Wecom notification: ${error instanceof Error ? error.message : "Unknown error"}`,
       variant: "destructive"
     });
     return false;
@@ -130,17 +153,19 @@ function formatWecomMarkdownMessage(message: string, status: string): string {
   const urlMatch = message.match(/URL: ([^\s\n]+)/);
   const url = urlMatch ? urlMatch[1] : "N/A";
   
-  // Format the message with markdown
+  // Format the message with markdown based on language
+  const isZhCN = currentLanguage === "zh-CN";
+  
   const markdownMessage = {
     msgtype: "markdown",
     markdown: {
-      content: `## <font color=\"${getStatusColor(status)}\">服务状态通知</font>\n\n` +
-               `**服务名称**: ${serviceName}\n` +
-               `**当前状态**: <font color=\"${getStatusColor(status)}\">${status.toUpperCase()}</font>\n` +
-               `**响应时间**: **${responseTime}**\n` +
+      content: `## <font color=\"${getStatusColor(status)}\">${isZhCN ? "服务状态通知" : "Service Status Notification"}</font>\n\n` +
+               `**${isZhCN ? "服务名称" : "Service Name"}**: ${serviceName}\n` +
+               `**${isZhCN ? "当前状态" : "Current Status"}**: <font color=\"${getStatusColor(status)}\">${status.toUpperCase()}</font>\n` +
+               `**${isZhCN ? "响应时间" : "Response Time"}**: **${responseTime}**\n` +
                `**URL**: **${url}**\n` +
-               `**详细信息**: ${formattedMessage}\n` +
-               `**通知时间**: **${new Date().toLocaleString()}**`
+               `**${isZhCN ? "详细信息" : "Details"}**: ${formattedMessage}\n` +
+               `**${isZhCN ? "通知时间" : "Notification Time"}**: **${new Date().toLocaleString()}**`
     }
   };
   
@@ -181,16 +206,22 @@ export async function testSendWecomMessage(
     console.log("====== TEST WECOM NOTIFICATION ======");
     console.log("Sending test notification to WeChat Work");
     
-    // Create a test message
-    const testMessage = `🧪 这是一条测试消息\nService ${serviceName} is UP\nResponse time: 123ms\nURL: https://example.com\n\n此消息仅用于测试企业微信通知配置。`;
+    // Create a test message based on language
+    const isZhCN = currentLanguage === "zh-CN";
+    const testMessage = isZhCN
+      ? `🧪 这是一条测试消息\nService ${serviceName} is UP\nResponse time: 123ms\nURL: https://example.com\n\n此消息仅用于测试企业微信通知配置。`
+      : `🧪 This is a test message\nService ${serviceName} is UP\nResponse time: 123ms\nURL: https://example.com\n\nThis message is only for testing Wecom notification configuration.`;
     
     // Send the notification with "up" status for testing
     return await sendWecomNotification(config, testMessage, "up");
   } catch (error) {
     console.error("Error in testSendWecomMessage:", error);
+    const isZhCN = currentLanguage === "zh-CN";
     toast({
-      title: "测试通知失败",
-      description: `发送企业微信测试通知时出错: ${error instanceof Error ? error.message : "未知错误"}`,
+      title: isZhCN ? "测试通知失败" : "Test Notification Failed",
+      description: isZhCN
+        ? `发送企业微信测试通知时出错: ${error instanceof Error ? error.message : "未知错误"}`
+        : `Error sending Wecom test notification: ${error instanceof Error ? error.message : "Unknown error"}`,
       variant: "destructive"
     });
     return false;
